@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kuliner AI — Smart Food & Recipe Decision Maker</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- ── HERO ───────────────────────────────────── -->
+    <header class="hero">
+      <div class="hero-eyebrow">
+        <span class="badge">Kuliner Otomatis</span>
+      </div>
+      <h1>Smart Food &amp; Recipe<br><span>Decision Maker</span></h1>
+      <p class="hero-subtitle">
+        Tell us what's in your fridge or set your street-food budget —
+        our AI crafts personalised recipe &amp; restaurant recommendations instantly.
+      </p>
+    </header>
+
+    <!-- ── BENTO GRID ─────────────────────────────── -->
+    <main>
+      <div class="bento" id="main-bento">
+
+        <!-- ── INPUT CARD (left, 7 cols) ───────────── -->
+        <div class="card col-7" id="input-card">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 11l1 9h16l1-9H3z"/><path d="M3 11H21"/><path d="M9 3v4m3-4v4m3-4v4"/>
+              </svg>
+              Configure Your Query
+            </span>
+            <span class="badge" id="mode-badge">Fridge Mode</span>
+          </div>
+
+          <!-- Mode toggle -->
+          <div class="mode-toggle" role="group" aria-label="Select mode">
+            <button class="mode-btn active" id="btn-fridge" onclick="switchMode('fridge')" aria-pressed="true">
+              <span class="mode-icon">🧊</span>
+              Fridge Ingredients
+            </button>
+            <button class="mode-btn" id="btn-budget" onclick="switchMode('budget')" aria-pressed="false">
+              <span class="mode-icon">🗺️</span>
+              Budget &amp; Local Cuisines
+            </button>
+          </div>
+
+          <!-- ── Panel A: Fridge Ingredients ────────── -->
+          <div class="input-panel active" id="panel-fridge">
+            <label for="ingredient-input">Add Ingredients</label>
+            <div class="tag-input-wrap" onclick="document.getElementById('ingredient-input').focus()">
+              <input
+                id="ingredient-input"
+                type="text"
+                placeholder="e.g. chicken, tofu, egg…"
+                autocomplete="off"
+                aria-label="Type an ingredient and press Enter"
+              />
+            </div>
+            <p class="hint-text">Press <kbd>Enter</kbd> or comma to add each ingredient.</p>
+
+            <div style="margin-top: 24px;">
+              <label for="cuisine-pref">Cuisine Preference</label>
+              <div class="city-chips" id="cuisine-chips" role="group" aria-label="Choose cuisine style"></div>
+            </div>
+          </div>
+
+          <!-- ── Panel B: Budget & Local Cuisines ───── -->
+          <div class="input-panel" id="panel-budget">
+            <label>Daily Food Budget</label>
+            <div class="budget-display">
+              <span class="budget-value" id="budget-val">25,000</span>
+              <span class="budget-unit"> IDR</span>
+            </div>
+            <input type="range" id="budget-slider" min="5000" max="150000" step="5000" value="25000" aria-label="Budget in IDR" />
+            <div style="display:flex;justify-content:space-between;margin-top:8px;">
+              <span class="hint-text">Rp 5K</span>
+              <span class="hint-text">Rp 150K</span>
+            </div>
+
+            <div style="margin-top: 26px;">
+              <label>Select City / Region</label>
+              <div class="city-chips" id="city-chips" role="group" aria-label="Choose city"></div>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="submit-btn" onclick="runAI()">
+            ✦ Generate Recommendations
+          </button>
+        </div>
+
+        <!-- ── SIDE COLUMN (5 cols) ──────────────────── -->
+        <div class="card col-5 side-col">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              </svg>
+              AI Insights
+            </span>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-val color-accent">1,200+</div>
+              <div class="stat-label">Recipes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val color-accent2">340+</div>
+              <div class="stat-label">Local Cuisines</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val color-accent3">98%</div>
+              <div class="stat-label">Match Rate</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val color-accent">&lt;2s</div>
+              <div class="stat-label">Avg. Response</div>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            <strong>💡 Pro Tip</strong><br>
+            For the best results in Fridge Mode, add at least
+            <strong style="color:var(--accent)">3 ingredients</strong>.
+            In Budget Mode, pick a city to discover hidden street-food gems
+            with <strong style="color:var(--accent2)">local price accuracy</strong>.
+          </div>
+        </div>
+
+        <!-- ── AI PROCESSING STATE ─────────────────── -->
+        <div class="card" id="processing-section">
+          <div class="ai-loader" aria-live="polite" aria-label="AI is processing">
+            <div class="ai-dot"></div>
+            <div class="ai-dot"></div>
+            <div class="ai-dot"></div>
+          </div>
+          <p class="ai-status-text" id="ai-status-msg">Initialising AI engine…</p>
+          <div class="ai-progress-bar">
+            <div class="ai-progress-fill" id="ai-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- ── RESULTS SECTION ────────────────────── -->
+        <div id="results-section">
+          <div class="results-header">
+            <h2 id="results-title">🍽️ Recommended for You</h2>
+            <button class="btn-secondary" onclick="resetUI()" aria-label="Try a new search">
+              ↩ New Search
+            </button>
+          </div>
+          <!-- recipe cards injected by JS as a vertical list -->
+          <div class="results-list" id="results-grid"></div>
+        </div>
+
+      </div><!-- .bento -->
+    </main>
+
+    <footer>
+      Kuliner AI &mdash; Smart Food &amp; Recipe Decision Maker &bull; Demo v1.0
+    </footer>
+
+  </div><!-- .app-shell -->
+
+  <!-- Component modules loaded in dependency order -->
+  <script src="js/data.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

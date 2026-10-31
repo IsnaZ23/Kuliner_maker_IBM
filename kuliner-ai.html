@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kuliner AI — Smart Food & Recipe Decision Maker</title>
+
+  <!-- ─────────────────────────────────────────────
+       EMBEDDED STYLES
+       Dark-mode bento-grid aesthetic
+  ───────────────────────────────────────────── -->
+  <style>
+    /* ── Reset & tokens ─────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── Light theme palette ── */
+      --bg:        #F8FAFC;
+      --surface:   #FFFFFF;
+      --surface2:  #F1F5F9;
+      --border:    #E2E8F0;
+      --border-focus: #94A3B8;
+      --accent:    #4F6EF7;
+      --accent2:   #F97316;
+      --accent3:   #0EA5A0;
+      --text:      #0F172A;
+      --muted:     #64748B;
+      --radius:    16px;
+      --radius-lg: 20px;
+      /* layered soft shadow for premium depth */
+      --shadow:    0 1px 3px rgba(15,23,42,.06),
+                   0 4px 12px rgba(15,23,42,.08),
+                   0 12px 32px rgba(15,23,42,.06);
+      --shadow-card-hover:
+                   0 2px 6px rgba(15,23,42,.07),
+                   0 8px 24px rgba(15,23,42,.11),
+                   0 20px 48px rgba(15,23,42,.08);
+      --transition: .22s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── Scrollbar ───────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* ── Layout shell — generous horizontal padding ── */
+    .app-shell {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+
+    @media (max-width: 600px) {
+      .app-shell { padding: 0 16px 60px; }
+    }
+
+    /* ── Utility ─────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      background: rgba(79,110,247,.08);
+      color: var(--accent);
+      border: 1px solid rgba(79,110,247,.18);
+    }
+
+    .badge.green {
+      background: rgba(14,165,160,.07);
+      color: var(--accent3);
+      border-color: rgba(14,165,160,.18);
+    }
+
+    .badge.orange {
+      background: rgba(249,115,22,.07);
+      color: var(--accent2);
+      border-color: rgba(249,115,22,.18);
+    }
+
+    /* ── HERO — airy top padding ─────────────────── */
+    .hero {
+      padding: 88px 0 64px;
+      text-align: center;
+      position: relative;
+    }
+
+    /* very soft tint, barely visible on white */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 55% at 50% 20%,
+                  rgba(79,110,247,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.1rem, 5vw, 3.4rem);
+      font-weight: 800;
+      letter-spacing: -.6px;
+      line-height: 1.12;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      color: var(--muted);
+      font-size: 1.08rem;
+      max-width: 540px;
+      margin: 0 auto;
+      line-height: 1.75;
+    }
+
+    /* ── BENTO GRID — wider gaps for white-space ─── */
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+      margin-top: 52px;
+    }
+
+    /* card base — crisp white with generous padding */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      box-shadow: var(--shadow);
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .card:hover {
+      border-color: rgba(79,110,247,.25);
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    /* bento column spans */
+    .col-12 { grid-column: span 12; }
+    .col-7  { grid-column: span 7;  }
+    .col-5  { grid-column: span 5;  }
+    .col-6  { grid-column: span 6;  }
+
+    @media (max-width: 768px) {
+      .col-7, .col-5, .col-6 { grid-column: span 12; }
+    }
+
+    /* card header row */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title svg { opacity: .8; }
+
+    /* ── MODE TOGGLE ─────────────────────────────── */
+    .mode-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .mode-btn {
+      padding: 18px 12px;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--transition);
+      line-height: 1.35;
+    }
+
+    .mode-btn .mode-icon { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+
+    .mode-btn.active {
+      background: rgba(79,110,247,.07);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .mode-btn:hover:not(.active) {
+      border-color: var(--border-focus);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* ── FORM ELEMENTS ───────────────────────────── */
+    label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      margin-bottom: 10px;
+    }
+
+    /* Input panel sections fade in/out */
+    .input-panel {
+      display: none;
+      animation: fadeSlide .3s ease;
+    }
+
+    .input-panel.active { display: block; }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* tag input */
+    .tag-input-wrap {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-height: 56px;
+      cursor: text;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .tag-input-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,110,247,.1);
+    }
+
+    .tag-chip {
+      background: rgba(79,110,247,.1);
+      color: var(--accent);
+      border-radius: 8px;
+      padding: 4px 11px;
+      font-size: .82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tag-chip button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0;
+      font-size: .95rem;
+      line-height: 1;
+      opacity: .6;
+    }
+
+    .tag-chip button:hover { opacity: 1; }
+
+    #ingredient-input {
+      flex: 1;
+      min-width: 120px;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: .9rem;
+    }
+
+    #ingredient-input::placeholder { color: #A0AABF; }
+
+    .hint-text {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* budget slider */
+    .budget-display {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+    }
+
+    .budget-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent2);
+    }
+
+    .budget-unit {
+      font-size: .88rem;
+      color: var(--muted);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(249,115,22,.15), 0 2px 6px rgba(249,115,22,.3);
+      cursor: pointer;
+    }
+
+    /* city chips */
+    .city-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .city-chip {
+      padding: 7px 16px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .city-chip.active,
+    .city-chip:hover {
+      background: rgba(249,115,22,.07);
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* ── SUBMIT BUTTON ───────────────────────────── */
+    .btn-primary {
+      width: 100%;
+      padding: 17px;
+      background: linear-gradient(135deg, var(--accent) 0%, #3B57D9 100%);
+      color: #fff;
+      font-size: .97rem;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      margin-top: 28px;
+      letter-spacing: .3px;
+      box-shadow: 0 4px 16px rgba(79,110,247,.3);
+      transition: box-shadow var(--transition), transform var(--transition), opacity var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 24px rgba(79,110,247,.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(79,110,247,.2); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── STATS MINI CARDS (side column) ──────────── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      text-align: center;
+    }
+
+    .stat-card .stat-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .stat-card .stat-label {
+      font-size: .74rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .color-accent  { color: var(--accent); }
+    .color-accent2 { color: var(--accent2); }
+    .color-accent3 { color: var(--accent3); }
+
+    /* tip box */
+    .tip-box {
+      background: rgba(14,165,160,.05);
+      border-left: 3px solid var(--accent3);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 18px 20px;
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .tip-box strong { color: var(--accent3); }
+
+    /* ── AI PROCESSING STATE ─────────────────────── */
+    #processing-section {
+      display: none;
+      grid-column: span 12;
+      text-align: center;
+      padding: 56px 32px;
+    }
+
+    #processing-section.visible { display: block; }
+
+    .ai-loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .ai-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 1.4s ease-in-out infinite;
+    }
+
+    .ai-dot:nth-child(2) { animation-delay: .2s; background: var(--accent3); }
+    .ai-dot:nth-child(3) { animation-delay: .4s; background: var(--accent2); }
+
+    @keyframes pulse-dot {
+      0%, 80%, 100% { transform: scale(.55); opacity: .35; }
+      40%            { transform: scale(1.15); opacity: 1; }
+    }
+
+    .ai-status-text {
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .ai-progress-bar {
+      width: 280px;
+      height: 5px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 20px auto 0;
+      overflow: hidden;
+    }
+
+    .ai-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+      border-radius: 99px;
+      transition: width .4s ease;
+    }
+
+    /* ── RESULTS SECTION ─────────────────────────── */
+    #results-section {
+      display: none;
+      grid-column: span 12;
+    }
+
+    #results-section.visible { display: block; }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .results-header h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    /* recipe card */
+    .recipe-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      cursor: pointer;
+    }
+
+    .recipe-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(79,110,247,.2);
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    /* colourful top accent stripe per card */
+    .recipe-card-stripe {
+      height: 5px;
+    }
+
+    .stripe-blue   { background: linear-gradient(90deg, #4F6EF7, #818CF8); }
+    .stripe-orange { background: linear-gradient(90deg, #F97316, #FB923C); }
+    .stripe-teal   { background: linear-gradient(90deg, #0EA5A0, #2DD4BF); }
+
+    .recipe-card-body { padding: 26px; }
+
+    .recipe-name {
+      font-size: 1.07rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .recipe-name .food-emoji { font-size: 1.35rem; }
+
+    .recipe-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .meta-pill {
+      font-size: .74rem;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 99px;
+    }
+
+    .meta-pill.cost {
+      background: rgba(249,115,22,.09);
+      color: var(--accent2);
+      border: 1px solid rgba(249,115,22,.2);
+    }
+
+    .meta-pill.time {
+      background: rgba(14,165,160,.08);
+      color: var(--accent3);
+      border: 1px solid rgba(14,165,160,.18);
+    }
+
+    .meta-pill.difficulty {
+      background: rgba(79,110,247,.08);
+      color: var(--accent);
+      border: 1px solid rgba(79,110,247,.16);
+    }
+
+    /* ingredient/location tags */
+    .recipe-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .recipe-tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: .74rem;
+      color: var(--muted);
+    }
+
+    /* accordion steps */
+    .steps-toggle {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 16px;
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .steps-toggle:hover {
+      background: rgba(79,110,247,.05);
+      border-color: rgba(79,110,247,.3);
+    }
+
+    .steps-toggle .chevron {
+      transition: transform var(--transition);
+      font-style: normal;
+      color: var(--muted);
+    }
+
+    .steps-toggle.open .chevron { transform: rotate(180deg); }
+
+    .steps-body {
+      display: none;
+      padding: 16px 0 4px;
+    }
+
+    .steps-body.open { display: block; }
+
+    .step-item {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(79,110,247,.1);
+      color: var(--accent);
+      font-size: .75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .step-text {
+      font-size: .86rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── FOOTER ──────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 40px 0 20px;
+      font-size: .78rem;
+      color: #94A3B8;
+      border-top: 1px solid var(--border);
+      margin-top: 72px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- ── HERO ───────────────────────────────────── -->
+    <header class="hero">
+      <div class="hero-eyebrow">
+        <span class="badge">✦ Powered by Kuliner AI</span>
+      </div>
+      <h1>Smart Food &amp; Recipe<br><span>Decision Maker</span></h1>
+      <p class="hero-subtitle">
+        Tell us what's in your fridge or set your street-food budget —
+        our AI crafts personalised recipe &amp; restaurant recommendations instantly.
+      </p>
+    </header>
+
+    <!-- ── BENTO GRID ─────────────────────────────── -->
+    <main>
+      <div class="bento" id="main-bento">
+
+        <!-- ── INPUT CARD (left, 7 cols) ───────────── -->
+        <div class="card col-7" id="input-card">
+          <div class="card-header">
+            <span class="card-title">
+              <!-- mixing bowl icon -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 11l1 9h16l1-9H3z"/><path d="M3 11H21"/><path d="M9 3v4m3-4v4m3-4v4"/>
+              </svg>
+              Configure Your Query
+            </span>
+            <span class="badge" id="mode-badge">Fridge Mode</span>
+          </div>
+
+          <!-- Mode toggle -->
+          <div class="mode-toggle" role="group" aria-label="Select mode">
+            <button class="mode-btn active" id="btn-fridge" onclick="switchMode('fridge')" aria-pressed="true">
+              <span class="mode-icon">🧊</span>
+              Fridge Ingredients
+            </button>
+            <button class="mode-btn" id="btn-budget" onclick="switchMode('budget')" aria-pressed="false">
+              <span class="mode-icon">🗺️</span>
+              Budget &amp; Local Cuisines
+            </button>
+          </div>
+
+          <!-- ── Panel A: Fridge Ingredients ────────── -->
+          <div class="input-panel active" id="panel-fridge">
+            <label for="ingredient-input">Add Ingredients</label>
+            <div class="tag-input-wrap" onclick="document.getElementById('ingredient-input').focus()">
+              <!-- tags rendered here by JS -->
+              <input
+                id="ingredient-input"
+                type="text"
+                placeholder="e.g. chicken, tofu, egg…"
+                autocomplete="off"
+                aria-label="Type an ingredient and press Enter"
+              />
+            </div>
+            <p class="hint-text">Press <kbd style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:2px 7px;border-radius:5px;font-size:.78rem;font-family:inherit">Enter</kbd> or comma to add each ingredient.</p>
+
+            <div style="margin-top: 20px;">
+              <label for="cuisine-pref">Cuisine Preference</label>
+              <div class="city-chips" id="cuisine-chips" role="group" aria-label="Choose cuisine style">
+                <!-- JS renders these -->
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Panel B: Budget & Local Cuisines ───── -->
+          <div class="input-panel" id="panel-budget">
+            <label>Daily Food Budget</label>
+            <div class="budget-display">
+              <span class="budget-value" id="budget-val">25,000</span>
+              <span class="budget-unit"> IDR</span>
+            </div>
+            <input
+              type="range"
+              id="budget-slider"
+              min="5000"
+              max="150000"
+              step="5000"
+              value="25000"
+              aria-label="Budget in IDR"
+            />
+            <div style="display:flex;justify-content:space-between;margin-top:6px;">
+              <span class="hint-text">Rp 5K</span>
+              <span class="hint-text">Rp 150K</span>
+            </div>
+
+            <div style="margin-top: 22px;">
+              <label>Select City / Region</label>
+              <div class="city-chips" id="city-chips" role="group" aria-label="Choose city">
+                <!-- JS renders these -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <button class="btn-primary" id="submit-btn" onclick="runAI()">
+            ✦ Generate Recommendations
+          </button>
+        </div>
+
+        <!-- ── SIDE COLUMN (5 cols) ──────────────────── -->
+        <div class="card col-5" style="display:flex;flex-direction:column;gap:0;">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              </svg>
+              AI Insights
+            </span>
+          </div>
+
+          <!-- mini stats -->
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-val color-accent">1,200+</div>
+              <div class="stat-label">Recipes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val color-accent2">340+</div>
+              <div class="stat-label">Local Cuisines</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val color-accent3">98%</div>
+              <div class="stat-label">Match Rate</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val color-accent">&lt;2s</div>
+              <div class="stat-label">Avg. Response</div>
+            </div>
+          </div>
+
+          <!-- tip box -->
+          <div class="tip-box" style="flex:1;">
+            <strong>💡 Pro Tip</strong><br>
+            For the best results in Fridge Mode, add at least
+            <strong style="color:var(--accent)">3 ingredients</strong>.
+            In Budget Mode, pick a city to discover hidden street-food gems
+            with <strong style="color:var(--accent2)">local price accuracy</strong>.
+          </div>
+        </div>
+
+        <!-- ── AI PROCESSING STATE ─────────────────── -->
+        <div class="card" id="processing-section">
+          <div class="ai-loader" aria-live="polite" aria-label="AI is processing">
+            <div class="ai-dot"></div>
+            <div class="ai-dot"></div>
+            <div class="ai-dot"></div>
+          </div>
+          <p class="ai-status-text" id="ai-status-msg">Initialising AI engine…</p>
+          <div class="ai-progress-bar">
+            <div class="ai-progress-fill" id="ai-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- ── RESULTS SECTION ────────────────────── -->
+        <div id="results-section">
+          <div class="results-header">
+            <h2 id="results-title">🍽️ Recommended for You</h2>
+            <button
+              style="background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);padding:9px 18px;border-radius:var(--radius);cursor:pointer;font-size:.83rem;font-weight:600;transition:all .22s ease;"
+              onmouseover="this.style.borderColor='var(--border-focus)';this.style.color='var(--text)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'"
+              onclick="resetUI()"
+              aria-label="Try a new search"
+            >
+              ↩ New Search
+            </button>
+          </div>
+          <div class="results-grid" id="results-grid">
+            <!-- recipe cards injected by JS -->
+          </div>
+        </div>
+
+      </div><!-- .bento -->
+    </main>
+
+    <!-- ── FOOTER ──────────────────────────────────── -->
+    <footer>
+      Kuliner AI &mdash; Smart Food &amp; Recipe Decision Maker &bull; Demo v1.0
+    </footer>
+
+  </div><!-- .app-shell -->
+
+  <!-- ─────────────────────────────────────────────
+       EMBEDDED JAVASCRIPT
+  ───────────────────────────────────────────── -->
+  <script>
+    /* ─────────────────────────────────────────────
+     * STATE
+     * ───────────────────────────────────────────── */
+    const state = {
+      mode: 'fridge',             // 'fridge' | 'budget'
+      ingredients: [],
+      selectedCuisines: [],
+      budget: 25000,
+      selectedCity: 'Yogyakarta'
+    };
+
+    /* ─────────────────────────────────────────────
+     * CONSTANTS / SEED DATA
+     * ───────────────────────────────────────────── */
+    const CUISINES = ['Any', 'Indonesian', 'Chinese', 'Western', 'Japanese', 'Vegan'];
+    const CITIES   = ['Yogyakarta', 'Jakarta', 'Bandung', 'Surabaya', 'Bali', 'Medan'];
+
+    /**
+     * Recipe database (simulated).
+     * Each object represents a dish the AI can "recommend".
+     * In production this would come from a real API.
+     */
+    const RECIPES_FRIDGE = [
+      {
+        emoji: '🍳',
+        name: 'Scrambled Tofu with Egg',
+        cost: 'Rp 8,000',
+        time: '15 min',
+        difficulty: 'Easy',
+        tags: ['tofu', 'egg', 'garlic', 'soy sauce'],
+        stripe: 'stripe-blue',
+        steps: [
+          'Crumble firm tofu into small pieces and set aside.',
+          'Sauté minced garlic in oil over medium heat until fragrant.',
+          'Add tofu, season with soy sauce, salt, and pepper; stir-fry 3 min.',
+          'Push tofu to the side, crack in eggs, and scramble lightly.',
+          'Fold eggs into tofu; cook 1 more minute. Serve hot.'
+        ]
+      },
+      {
+        emoji: '🍜',
+        name: 'Mie Goreng Sederhana',
+        cost: 'Rp 12,000',
+        time: '20 min',
+        difficulty: 'Easy',
+        tags: ['noodles', 'egg', 'cabbage', 'sweet soy sauce'],
+        stripe: 'stripe-orange',
+        steps: [
+          'Boil noodles until al-dente; drain and toss with a drop of oil.',
+          'Heat oil; stir-fry shallots and garlic 2 min.',
+          'Add noodles, kecap manis, and oyster sauce; toss well.',
+          'Push to side, scramble an egg in the same wok.',
+          'Mix egg through the noodles; add cabbage and cook 2 min.',
+          'Garnish with fried shallots and a lime wedge.'
+        ]
+      },
+      {
+        emoji: '🍲',
+        name: 'Sayur Bening Bayam',
+        cost: 'Rp 5,000',
+        time: '25 min',
+        difficulty: 'Easy',
+        tags: ['spinach', 'corn', 'shallots', 'water'],
+        stripe: 'stripe-teal',
+        steps: [
+          'Bring 600 ml water to a gentle boil.',
+          'Add sliced shallots and garlic; simmer 3 min.',
+          'Add sweet corn chunks; cook 5 min.',
+          'Add spinach leaves; season with salt and a pinch of sugar.',
+          'Cook 2 more minutes. Serve as a light, clear soup.'
+        ]
+      }
+    ];
+
+    const RECIPES_BUDGET = {
+      Yogyakarta: [
+        {
+          emoji: '🍚',
+          name: 'Nasi Gudeg Yu Djum',
+          cost: 'Rp 15,000',
+          time: 'Ready to eat',
+          difficulty: 'Dine-out',
+          tags: ['Jl. Kaliurang', 'Open 06:00–14:00', 'Jackfruit stew'],
+          stripe: 'stripe-orange',
+          steps: [
+            'Head to Jl. Kaliurang KM 4.5, Yogyakarta.',
+            'Order the standard "porsi" (serving) which includes rice, gudeg, krecek, and a boiled egg.',
+            'Pair with hot teh jahe (ginger tea) for Rp 3,000.',
+            'Arrive before 10 AM for the freshest batch.',
+            'Take-away packaging available in banana-leaf wraps.'
+          ]
+        },
+        {
+          emoji: '🥜',
+          name: 'Sate Klathak Pak Pong',
+          cost: 'Rp 22,000',
+          time: 'Ready to eat',
+          difficulty: 'Dine-out',
+          tags: ['Pasar Pathuk', 'Open 17:00–23:00', 'Lamb satay'],
+          stripe: 'stripe-blue',
+          steps: [
+            'Find the stall at Pasar Pathuk, near Alun-Alun Selatan.',
+            'Sate Klathak uses thick iron skewers — ask for 2 skewers + rice.',
+            'Season is minimal: only salt, letting the lamb flavour shine.',
+            'Enjoy with kuah tongseng (spiced broth) on the side.',
+            'Budget: Rp 22K for 2 skewers + rice + broth.'
+          ]
+        },
+        {
+          emoji: '🍢',
+          name: 'Angkringan Lik Man',
+          cost: 'Rp 10,000',
+          time: 'Ready to eat',
+          difficulty: 'Dine-out',
+          tags: ['Stasiun Tugu', 'Open 17:30–late', 'Street snacks'],
+          stripe: 'stripe-teal',
+          steps: [
+            'Find Angkringan Lik Man right next to Tugu Train Station.',
+            'Pick 4–6 skewers from the cart (sate usus, tempe, tahu).',
+            'Order nasi kucing (small rice packet) for Rp 2,000 each.',
+            'Pair with traditional kopi joss (coffee with a charcoal briquette).',
+            'Rp 10K–15K will get you a satisfying, authentic experience.'
+          ]
+        }
+      ],
+      Jakarta: [
+        {
+          emoji: '🍜',
+          name: 'Soto Betawi Bu Haji',
+          cost: 'Rp 25,000',
+          time: 'Ready to eat',
+          difficulty: 'Dine-out',
+          tags: ['Menteng area', 'Open 07:00–15:00', 'Beef soup'],
+          stripe: 'stripe-orange',
+          steps: [
+            'Visit the stall in Menteng, Central Jakarta.',
+            'Order the "komplit" (complete) version with beef, lung, and potato.',
+            'Rich coconut milk broth — ask for extra emping crackers.',
+            'Squeeze lime to cut through the richness.',
+            'Pair with sweet iced tea (es teh manis) for Rp 5,000.'
+          ]
+        },
+        {
+          emoji: '🥗',
+          name: 'Gado-Gado Cemara',
+          cost: 'Rp 18,000',
+          time: 'Ready to eat',
+          difficulty: 'Dine-out',
+          tags: ['Cikini area', 'Open 10:00–20:00', 'Peanut sauce salad'],
+          stripe: 'stripe-teal',
+          steps: [
+            'Locate the stall near Cikini roundabout.',
+            'Choose your vegetables: kangkung, bean sprouts, potato, egg.',
+            'The peanut sauce is freshly ground — specify your spice level.',
+            'Add lontong (rice cake) for extra filling.',
+            'Topped with kerupuk and fried shallots before serving.'
+          ]
+        },
+        {
+          emoji: '🍢',
+          name: 'Ketoprak Cirebon Abang',
+          cost: 'Rp 14,000',
+          time: 'Ready to eat',
+          difficulty: 'Dine-out',
+          tags: ['Street cart', 'Open 11:00–21:00', 'Tofu & vermicelli'],
+          stripe: 'stripe-blue',
+          steps: [
+            'Look for the blue-cart ketoprak vendor along Jl. Wahid Hasyim.',
+            'Ingredients: bihun, tahu, taoge, ketimun, and lontong.',
+            'Sauce: peanut-based with kecap manis and sambal.',
+            'Sprinkle generous amounts of emping for crunch.',
+            'Budget-friendly and filling — one portion is enough for lunch.'
+          ]
+        }
+      ]
+    };
+
+    /* Fallback for cities not in dataset */
+    const FALLBACK_RECIPES = [
+      {
+        emoji: '🍛',
+        name: 'Nasi Campur Lokal',
+        cost: 'Rp 18,000',
+        time: 'Ready to eat',
+        difficulty: 'Dine-out',
+        tags: ['Local warung', 'Mixed rice', 'Budget-friendly'],
+        stripe: 'stripe-orange',
+        steps: [
+          'Find the nearest warung nasi campur in your area.',
+          'Point to 3–4 side dishes from the display.',
+          'Common picks: tempe goreng, tahu bacem, sayur asem, and sambal.',
+          'Comes with a portion of steamed white rice.',
+          'Usually open for lunch 11:00–15:00.'
+        ]
+      },
+      {
+        emoji: '🥘',
+        name: 'Soto Ayam Kampung',
+        cost: 'Rp 12,000',
+        time: 'Ready to eat',
+        difficulty: 'Dine-out',
+        tags: ['Street food', 'Chicken broth', 'Common across Indonesia'],
+        stripe: 'stripe-teal',
+        steps: [
+          'Look for a soto stall near your location.',
+          'Order the standard bowl with rice or vermicelli.',
+          'Add a soft-boiled egg for Rp 2,000 extra.',
+          'Squeeze lime and add a spoonful of sambal.',
+          'The clear golden broth is a signature of soto ayam kampung.'
+        ]
+      },
+      {
+        emoji: '🥞',
+        name: 'Martabak Terang Bulan',
+        cost: 'Rp 20,000',
+        time: 'Ready to eat',
+        difficulty: 'Dine-out',
+        tags: ['Night market', 'Sweet pancake', 'Popular snack'],
+        stripe: 'stripe-blue',
+        steps: [
+          'Visit a night market (pasar malam) or look for roadside vendors after 5 PM.',
+          'Choose a sweet filling: chocolate, cheese, peanut, or combination.',
+          'Freshly made thick pancake batter is poured into a pan and cooked slowly.',
+          'Cut into portions and wrapped in paper.',
+          'Great as a dessert or evening snack within budget.'
+        ]
+      }
+    ];
+
+    /* AI processing status messages shown sequentially */
+    const AI_MESSAGES = [
+      'Scanning ingredient database…',
+      'Cross-referencing local cuisines…',
+      'Calculating nutritional balance…',
+      'Matching your budget constraints…',
+      'Finalising top recommendations…'
+    ];
+
+    /* ─────────────────────────────────────────────
+     * DOM REFERENCES
+     * ───────────────────────────────────────────── */
+    const $modeBadge    = document.getElementById('mode-badge');
+    const $btnFridge    = document.getElementById('btn-fridge');
+    const $btnBudget    = document.getElementById('btn-budget');
+    const $panelFridge  = document.getElementById('panel-fridge');
+    const $panelBudget  = document.getElementById('panel-budget');
+    const $submitBtn    = document.getElementById('submit-btn');
+    const $processing   = document.getElementById('processing-section');
+    const $results      = document.getElementById('results-section');
+    const $resultsGrid  = document.getElementById('results-grid');
+    const $resultsTitle = document.getElementById('results-title');
+    const $aiMsg        = document.getElementById('ai-status-msg');
+    const $aiProgress   = document.getElementById('ai-progress-fill');
+    const $budgetSlider = document.getElementById('budget-slider');
+    const $budgetVal    = document.getElementById('budget-val');
+    const $tagWrap      = document.querySelector('.tag-input-wrap');
+    const $ingInput     = document.getElementById('ingredient-input');
+
+    /* ─────────────────────────────────────────────
+     * INIT
+     * ───────────────────────────────────────────── */
+    (function init() {
+      renderCuisineChips();
+      renderCityChips();
+      setupIngredientInput();
+      setupBudgetSlider();
+    })();
+
+    /* ─────────────────────────────────────────────
+     * CUISINE CHIPS (Fridge mode)
+     * ───────────────────────────────────────────── */
+    function renderCuisineChips() {
+      const wrap = document.getElementById('cuisine-chips');
+      wrap.innerHTML = '';
+      CUISINES.forEach(function(c, i) {
+        const btn = document.createElement('button');
+        btn.className = 'city-chip' + (i === 0 ? ' active' : '');
+        btn.textContent = c;
+        btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+        btn.onclick = function() {
+          wrap.querySelectorAll('.city-chip').forEach(function(b) {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
+          state.selectedCuisines = [c];
+        };
+        wrap.appendChild(btn);
+      });
+      state.selectedCuisines = [CUISINES[0]];
+    }
+
+    /* ─────────────────────────────────────────────
+     * CITY CHIPS (Budget mode)
+     * ───────────────────────────────────────────── */
+    function renderCityChips() {
+      const wrap = document.getElementById('city-chips');
+      wrap.innerHTML = '';
+      CITIES.forEach(function(city, i) {
+        const btn = document.createElement('button');
+        btn.className = 'city-chip' + (i === 0 ? ' active' : '');
+        btn.textContent = city;
+        btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+        btn.onclick = function() {
+          wrap.querySelectorAll('.city-chip').forEach(function(b) {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
+          state.selectedCity = city;
+        };
+        wrap.appendChild(btn);
+      });
+    }
+
+    /* ─────────────────────────────────────────────
+     * INGREDIENT TAG INPUT
+     * ───────────────────────────────────────────── */
+    function setupIngredientInput() {
+      $ingInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          addIngredient($ingInput.value);
+        }
+        // backspace on empty input removes last tag
+        if (e.key === 'Backspace' && $ingInput.value === '' && state.ingredients.length > 0) {
+          removeIngredient(state.ingredients.length - 1);
+        }
+      });
+
+      $ingInput.addEventListener('blur', function() {
+        if ($ingInput.value.trim()) addIngredient($ingInput.value);
+      });
+    }
+
+    function addIngredient(raw) {
+      const val = raw.replace(/,/g, '').trim().toLowerCase();
+      if (!val || state.ingredients.includes(val)) {
+        $ingInput.value = '';
+        return;
+      }
+      state.ingredients.push(val);
+      renderTags();
+      $ingInput.value = '';
+    }
+
+    function removeIngredient(idx) {
+      state.ingredients.splice(idx, 1);
+      renderTags();
+    }
+
+    function renderTags() {
+      // remove all existing chips, keep the input element
+      $tagWrap.querySelectorAll('.tag-chip').forEach(function(el) { el.remove(); });
+      state.ingredients.forEach(function(ing, i) {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML =
+          ing +
+          '<button onclick="removeIngredient(' + i + ')" aria-label="Remove ' + ing + '">×</button>';
+        $tagWrap.insertBefore(chip, $ingInput);
+      });
+    }
+
+    /* ─────────────────────────────────────────────
+     * BUDGET SLIDER
+     * ───────────────────────────────────────────── */
+    function setupBudgetSlider() {
+      $budgetSlider.addEventListener('input', function() {
+        state.budget = parseInt($budgetSlider.value, 10);
+        $budgetVal.textContent = state.budget.toLocaleString('id-ID');
+      });
+    }
+
+    /* ─────────────────────────────────────────────
+     * MODE SWITCH
+     * ───────────────────────────────────────────── */
+    function switchMode(mode) {
+      state.mode = mode;
+
+      const isFridge = mode === 'fridge';
+
+      $btnFridge.classList.toggle('active', isFridge);
+      $btnBudget.classList.toggle('active', !isFridge);
+      $btnFridge.setAttribute('aria-pressed', isFridge ? 'true' : 'false');
+      $btnBudget.setAttribute('aria-pressed', isFridge ? 'false' : 'true');
+
+      $panelFridge.classList.toggle('active', isFridge);
+      $panelBudget.classList.toggle('active', !isFridge);
+
+      $modeBadge.textContent = isFridge ? 'Fridge Mode' : 'Budget Mode';
+    }
+
+    /* ─────────────────────────────────────────────
+     * RUN AI (orchestrator)
+     * ───────────────────────────────────────────── */
+    function runAI() {
+      // basic validation
+      if (state.mode === 'fridge' && state.ingredients.length === 0) {
+        shakeElement('input-card');
+        alert('Please add at least one ingredient before generating recommendations.');
+        return;
+      }
+
+      // hide results, show processing
+      $results.classList.remove('visible');
+      $results.style.display = 'none';
+      $processing.classList.add('visible');
+      $submitBtn.disabled = true;
+
+      simulateProcessing(function() {
+        // done — show results
+        $processing.classList.remove('visible');
+        displayResults();
+        $submitBtn.disabled = false;
+      });
+    }
+
+    /* ─────────────────────────────────────────────
+     * SIMULATED AI PROCESSING
+     * ───────────────────────────────────────────── */
+    function simulateProcessing(onComplete) {
+      let step = 0;
+      const totalSteps = AI_MESSAGES.length;
+      const stepDuration = 520; // ms per step
+
+      function tick() {
+        if (step >= totalSteps) {
+          $aiProgress.style.width = '100%';
+          setTimeout(onComplete, 300);
+          return;
+        }
+        $aiMsg.textContent = AI_MESSAGES[step];
+        $aiProgress.style.width = ((step + 1) / totalSteps * 100) + '%';
+        step++;
+        setTimeout(tick, stepDuration);
+      }
+
+      // reset bar
+      $aiProgress.style.width = '0%';
+      tick();
+    }
+
+    /* ─────────────────────────────────────────────
+     * DISPLAY RESULTS
+     * ───────────────────────────────────────────── */
+    function displayResults() {
+      let recipes;
+
+      if (state.mode === 'fridge') {
+        recipes = RECIPES_FRIDGE;
+        $resultsTitle.textContent =
+          '🍳 Recipes using: ' + state.ingredients.slice(0, 3).join(', ') +
+          (state.ingredients.length > 3 ? '…' : '');
+      } else {
+        // look up city-specific recipes; fall back to generic
+        recipes = RECIPES_BUDGET[state.selectedCity] || FALLBACK_RECIPES;
+        $resultsTitle.textContent =
+          '🗺️ Best eats in ' + state.selectedCity +
+          ' under Rp ' + state.budget.toLocaleString('id-ID');
+      }
+
+      // filter budget mode cards by price if possible
+      if (state.mode === 'budget') {
+        recipes = recipes.filter(function(r) {
+          const price = parseInt(r.cost.replace(/[^\d]/g, ''), 10);
+          return price <= state.budget;
+        });
+        // if filter removes everything, show all
+        if (recipes.length === 0) recipes = RECIPES_BUDGET[state.selectedCity] || FALLBACK_RECIPES;
+      }
+
+      // render cards
+      $resultsGrid.innerHTML = '';
+      recipes.forEach(function(recipe, idx) {
+        $resultsGrid.appendChild(buildRecipeCard(recipe, idx));
+      });
+
+      $results.style.display = 'block';
+      // slight delay so display:block paints before transition
+      requestAnimationFrame(function() {
+        $results.classList.add('visible');
+        $results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    /* ─────────────────────────────────────────────
+     * BUILD RECIPE CARD (DOM)
+     * ───────────────────────────────────────────── */
+    function buildRecipeCard(recipe, idx) {
+      const card = document.createElement('article');
+      card.className = 'recipe-card';
+      card.style.animationDelay = (idx * 0.08) + 's';
+      card.style.animation = 'fadeSlide .4s ease both';
+
+      // tags HTML
+      const tagsHTML = recipe.tags
+        .map(function(t) { return '<span class="recipe-tag">' + escapeHTML(t) + '</span>'; })
+        .join('');
+
+      // steps HTML
+      const stepsHTML = recipe.steps
+        .map(function(s, i) {
+          return '<div class="step-item">' +
+            '<div class="step-num">' + (i + 1) + '</div>' +
+            '<p class="step-text">' + escapeHTML(s) + '</p>' +
+          '</div>';
+        })
+        .join('');
+
+      const toggleId = 'steps-toggle-' + idx;
+      const bodyId   = 'steps-body-' + idx;
+
+      card.innerHTML =
+        '<div class="recipe-card-stripe ' + recipe.stripe + '"></div>' +
+        '<div class="recipe-card-body">' +
+          '<div class="recipe-name">' +
+            '<span class="food-emoji">' + recipe.emoji + '</span>' +
+            escapeHTML(recipe.name) +
+          '</div>' +
+          '<div class="recipe-meta">' +
+            '<span class="meta-pill cost">' + escapeHTML(recipe.cost) + '</span>' +
+            '<span class="meta-pill time">⏱ ' + escapeHTML(recipe.time) + '</span>' +
+            '<span class="meta-pill difficulty">' + escapeHTML(recipe.difficulty) + '</span>' +
+          '</div>' +
+          '<div class="recipe-tags">' + tagsHTML + '</div>' +
+          '<button class="steps-toggle" id="' + toggleId + '" ' +
+            'onclick="toggleSteps(\'' + toggleId + '\',\'' + bodyId + '\')" ' +
+            'aria-expanded="false" aria-controls="' + bodyId + '">' +
+            'View Step-by-Step <em class="chevron">▾</em>' +
+          '</button>' +
+          '<div class="steps-body" id="' + bodyId + '" role="region">' +
+            stepsHTML +
+          '</div>' +
+        '</div>';
+
+      return card;
+    }
+
+    /* ─────────────────────────────────────────────
+     * STEPS ACCORDION TOGGLE
+     * ───────────────────────────────────────────── */
+    function toggleSteps(toggleId, bodyId) {
+      const toggle = document.getElementById(toggleId);
+      const body   = document.getElementById(bodyId);
+      const isOpen = toggle.classList.contains('open');
+
+      toggle.classList.toggle('open', !isOpen);
+      body.classList.toggle('open', !isOpen);
+      toggle.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+    }
+
+    /* ─────────────────────────────────────────────
+     * RESET UI
+     * ───────────────────────────────────────────── */
+    function resetUI() {
+      $results.classList.remove('visible');
+      $results.style.display = 'none';
+      state.ingredients = [];
+      renderTags();
+      $ingInput.value = '';
+      document.getElementById('input-card').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    /* ─────────────────────────────────────────────
+     * HELPERS
+     * ───────────────────────────────────────────── */
+
+    /** Escape HTML to prevent XSS when injecting text into innerHTML. */
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /** Briefly shake a card to signal validation error. */
+    function shakeElement(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.animation = 'none';
+      el.offsetHeight; /* trigger reflow */
+      el.style.animation = 'shake .35s ease';
+    }
+
+    /* shake keyframe — injected dynamically once */
+    (function addShakeKeyframe() {
+      const style = document.createElement('style');
+      style.textContent =
+        '@keyframes shake{' +
+        '0%,100%{transform:translateX(0)}' +
+        '20%{transform:translateX(-6px)}' +
+        '40%{transform:translateX(6px)}' +
+        '60%{transform:translateX(-4px)}' +
+        '80%{transform:translateX(4px)}' +
+        '}';
+      document.head.appendChild(style);
+    })();
+  </script>
+</body>
+</html>
