@@ -1,9 +1,6 @@
 # 🍜 Kuliner AI — Smart Food & Recipe Decision Maker
 
 > A clean, minimalist web dashboard that uses ingredient-based matching and budget filtering to recommend authentic Indonesian recipes and local street-food spots — instantly.
-
-![Kuliner AI Screenshot](img/tampilan.png)
-
 ---
 
 ## ✨ Features
