@@ -2,7 +2,7 @@
 
 > A clean, minimalist web dashboard that uses ingredient-based matching and budget filtering to recommend authentic Indonesian recipes and local street-food spots — instantly.
 
-![Kuliner AI Screenshot](https://raw.githubusercontent.com/placeholder/kuliner-ai/main/preview.png)
+![Kuliner AI Screenshot](img/tampilan.png)
 
 ---
 
@@ -24,8 +24,8 @@
 
 <p align="center">
   <img
-    src="https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?auto=format&fit=crop&w=800&q=80"
-    alt="Kuliner AI – recipe results for ayam"
+    src="img/tampilan.png"
+    alt="Kuliner AI – tampilan UI hasil rekomendasi resep"
     width="720"
     style="border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.12)"
   />
